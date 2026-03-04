@@ -52,19 +52,19 @@ const reportCategories: ReportCategory[] = [
             {
                 title: "Day Book",
                 description: "Daily transaction log of all receipts and payments.",
-                href: "#",
+                href: "/reports/daybook",
                 icon: <FileTextIcon size={24} className="text-slate-500" />
             },
             {
                 title: "Profit & Loss",
                 description: "Income and expenses covering a specific period.",
-                href: "#",
+                href: "/reports/profit-loss",
                 icon: <TrendingUpIcon size={24} className="text-emerald-500" />
             },
             {
                 title: "Balance Sheet",
                 description: "Financial snapshot of assets, liabilities, and equity.",
-                href: "#",
+                href: "/reports/balance-sheet",
                 icon: <ScaleIcon size={24} className="text-indigo-500" />
             }
         ]
@@ -76,13 +76,13 @@ const reportCategories: ReportCategory[] = [
             {
                 title: "Customer Outstanding",
                 description: "Unpaid invoices and balances by customer.",
-                href: "#",
+                href: "/reports/outstanding",
                 icon: <Users size={24} className="text-rose-500" />
             },
             {
                 title: "Sales Summary",
                 description: "Aggregate sales categorized by item or period.",
-                href: "#",
+                href: "/reports/sales-summary",
                 icon: <BarChart3Icon size={24} className="text-blue-500" />
             }
         ]

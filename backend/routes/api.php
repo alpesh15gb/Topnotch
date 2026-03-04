@@ -21,6 +21,9 @@ use App\Http\Controllers\Api\V1\GstReportController;
 use App\Http\Controllers\Api\V1\CompanySettingController;
 use App\Http\Controllers\Api\V1\UserManagementController;
 use App\Http\Controllers\Api\V1\BackupController;
+use App\Http\Controllers\Api\V1\DebitNoteController;
+use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\ReceiptController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -76,6 +79,8 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('expenses', ExpenseController::class);
             Route::post('expenses/{expense}/receipt', [ExpenseController::class, 'attachReceipt']);
 
+            Route::apiResource('debit-notes', DebitNoteController::class);
+
             // Cash & Bank
             Route::apiResource('bank-accounts', BankAccountController::class);
             Route::post('bank-accounts/{bankAccount}/reconcile', [BankAccountController::class, 'reconcile']);
@@ -85,6 +90,15 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('loans', LoanAccountController::class);
 
             Route::apiResource('fund-transfers', FundTransferController::class);
+
+            // Banking payments & receipts
+            Route::get('payments', [PaymentController::class, 'index']);
+            Route::post('payments', [PaymentController::class, 'store']);
+            Route::get('payments/{vendorPayment}', [PaymentController::class, 'show']);
+            Route::delete('payments/{vendorPayment}', [PaymentController::class, 'destroy']);
+
+            Route::get('receipts', [ReceiptController::class, 'index']);
+            Route::get('receipts/{receipt}', [ReceiptController::class, 'show']);
 
             // Reports
             Route::prefix('reports')->group(function () {

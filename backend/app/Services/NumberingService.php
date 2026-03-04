@@ -8,6 +8,8 @@ use App\Models\SaleOrder;
 use App\Models\ProformaInvoice;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseBill;
+use App\Models\DebitNote;
+use App\Models\VendorPayment;
 use Illuminate\Support\Facades\DB;
 
 class NumberingService
@@ -52,5 +54,19 @@ class NumberingService
         $year = date('Y');
         $count = PurchaseBill::whereYear('created_at', $year)->count() + 1;
         return sprintf('BILL/%s/%04d', $year, $count);
+    }
+
+    public function generateDebitNoteNumber(): string
+    {
+        $year = date('Y');
+        $count = DebitNote::whereYear('created_at', $year)->count() + 1;
+        return sprintf('DN/%s/%04d', $year, $count);
+    }
+
+    public function generateVendorPaymentNumber(): string
+    {
+        $year = date('Y');
+        $count = VendorPayment::whereYear('created_at', $year)->count() + 1;
+        return sprintf('PMT/%s/%04d', $year, $count);
     }
 }
