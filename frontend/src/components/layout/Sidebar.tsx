@@ -47,10 +47,10 @@ const navItems: NavItem[] = [
     label: 'Cash & Bank',
     icon: <Wallet size={18} />,
     children: [
-      { label: 'Bank Accounts', href: '/cash-bank/bank-accounts' },
-      { label: 'Cheques', href: '/cash-bank/cheques' },
-      { label: 'Loans', href: '/cash-bank/loans' },
-      { label: 'Fund Transfers', href: '/cash-bank/transfers' },
+      { label: 'Bank Accounts', href: '/banking/accounts' },
+      { label: 'Cheques', href: '/banking/cheques' },
+      { label: 'Loans', href: '/banking/loans' },
+      { label: 'Fund Transfers', href: '/banking/fund-transfers' },
     ],
   },
   {
@@ -64,9 +64,8 @@ const navItems: NavItem[] = [
       { label: 'Balance Sheet', href: '/reports/balance-sheet' },
       { label: 'Cash Flow', href: '/reports/cash-flow' },
       { label: 'Party Statement', href: '/reports/party-statement' },
-      { label: 'GSTR-1', href: '/reports/gst/gstr1' },
-      { label: 'GSTR-2', href: '/reports/gst/gstr2' },
-      { label: 'GSTR-3B', href: '/reports/gst/gstr3b' },
+      { label: 'GSTR-1', href: '/reports/gstr1' },
+      { label: 'GSTR-3B', href: '/reports/gstr3b' },
     ],
   },
   {
