@@ -22,7 +22,7 @@ export default function PartyStatementPage() {
     queryKey: ['party-statement', partyId, from, to],
     enabled: !!partyId,
     queryFn: async () => {
-      const res = await api.get(`/v1/reports/party-statement/${partyId}`, { params: { from, to } });
+      const res = await api.get(`/v1/reports/party-statement/${partyId}`, { params: { from_date: from, to_date: to } });
       return res.data;
     },
   });

@@ -11,7 +11,7 @@ export default function PurchasesReportPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['report-purchases', from, to],
     queryFn: async () => {
-      const res = await api.get('/v1/reports/purchases/summary', { params: { from, to } });
+      const res = await api.get('/v1/reports/purchases/summary', { params: { from_date: from, to_date: to } });
       return res.data;
     },
   });

@@ -12,14 +12,14 @@ export default function CashFlowPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['report-cashflow', from, to],
     queryFn: async () => {
-      const res = await api.get('/v1/reports/cash-flow', { params: { from, to } });
+      const res = await api.get('/v1/reports/cash-flow', { params: { from_date: from, to_date: to } });
       return res.data;
     },
   });
 
-  const inflow = data?.total_inflow ?? 0;
-  const outflow = data?.total_outflow ?? 0;
-  const net = inflow - outflow;
+  const inflow = data?.operating?.receipts_from_customers ?? 0;
+  const outflow = (data?.operating?.payments_to_suppliers ?? 0) + (data?.operating?.expense_payments ?? 0);
+  const net = data?.operating?.net_operating ?? 0;
 
   return (
     <div className="space-y-6">

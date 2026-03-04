@@ -12,7 +12,7 @@ export default function SalesReportPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['report-sales', from, to],
     queryFn: async () => {
-      const res = await api.get('/v1/reports/sales/summary', { params: { from, to } });
+      const res = await api.get('/v1/reports/sales/summary', { params: { from_date: from, to_date: to } });
       return res.data;
     },
   });
