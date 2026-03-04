@@ -53,11 +53,15 @@ RUN composer install --no-scripts --no-autoloader --prefer-dist --no-interaction
 # Copy application
 COPY . .
 
+# Ensure required directories exist and are writable during build
+RUN mkdir -p /var/www/bootstrap/cache /var/www/storage/logs /var/www/storage/framework/cache /var/www/storage/framework/sessions /var/www/storage/framework/views \
+    && chmod -R 775 /var/www/bootstrap/cache /var/www/storage
+
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
 # PHP-FPM config
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
