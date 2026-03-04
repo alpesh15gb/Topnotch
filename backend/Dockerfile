@@ -48,13 +48,13 @@ WORKDIR /var/www
 COPY composer.json composer.lock* ./
 
 # Install dependencies
-RUN composer install --no-scripts --no-autoloader --prefer-dist --no-interaction 2>/dev/null || true
+RUN composer install --no-scripts --no-autoloader --prefer-dist --no-interaction
 
 # Copy application
 COPY . .
 
 # Generate optimized autoloader
-RUN composer dump-autoload --optimize 2>/dev/null || true
+RUN composer dump-autoload --optimize
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
