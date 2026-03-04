@@ -88,6 +88,9 @@ export const useAuthStore = create<AuthState>()(
         tenants: state.tenants,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setIsHydrated(true);
+      },
     }
   )
 );
