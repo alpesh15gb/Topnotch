@@ -11,7 +11,7 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL=https://topnotch.apextime.in/api
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-RUN npm run build
+RUN mkdir -p /app/public && npm run build
 
 # Production runner using standalone output
 FROM node:20-alpine AS runner
