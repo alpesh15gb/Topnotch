@@ -1,0 +1,232 @@
+'use client';
+
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/lib/api';
+import { Plus, Search, FileText, Download, Send, CreditCard } from 'lucide-react';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+
+interface PurchaseBill {
+    id: number;
+    number: string;
+    date: string;
+    due_date: string | null;
+    status: 'draft' | 'posted' | 'partially_paid' | 'paid' | 'overdue' | 'cancelled';
+    total: number;
+    balance: number;
+    party: {
+        id: number;
+        name: string;
+        type: string;
+    };
+}
+
+const statusColors = {
+    draft: 'bg-slate-100 text-slate-700',
+    posted: 'bg-blue-100 text-blue-700',
+    partially_paid: 'bg-amber-100 text-amber-700',
+    paid: 'bg-emerald-100 text-emerald-700',
+    overdue: 'bg-rose-100 text-rose-700',
+    cancelled: 'bg-slate-200 text-slate-500',
+};
+
+const statusLabels = {
+    draft: 'Draft',
+    posted: 'Posted/Received',
+    partially_paid: 'Partial',
+    paid: 'Paid',
+    overdue: 'Overdue',
+    cancelled: 'Cancelled',
+};
+
+export default function PurchaseBillsPage() {
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+
+    const { data: bills, isLoading } = useQuery({
+        queryKey: ['purchase_bills', search, statusFilter],
+        queryFn: async () => {
+            const res = await api.get('/v1/purchase-bills', {
+                params: { search, status: statusFilter }
+            });
+            return res.data;
+        }
+    });
+
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-800">Purchase Bills</h1>
+                    <p className="text-sm text-slate-500">Manage vendor bills and track accounts payable</p>
+                </div>
+
+                <Link
+                    href="/purchases/bills/new"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#0F172A] text-white rounded-lg hover:bg-[#1e3a5f] transition-colors shadow-sm"
+                >
+                    <Plus size={18} />
+                    <span>New Bill</span>
+                </Link>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row gap-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search by bill number, vendor name..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent outline-none"
+                        />
+                    </div>
+
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent outline-none bg-white min-w-[150px]"
+                    >
+                        <option value="">All Statuses</option>
+                        {Object.entries(statusLabels).map(([key, label]) => (
+                            <option key={key} value={key}>{label}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
+                                <th className="px-6 py-3 font-medium">Bill Info</th>
+                                <th className="px-6 py-3 font-medium">Vendor</th>
+                                <th className="px-6 py-3 font-medium">Status</th>
+                                <th className="px-6 py-3 font-medium text-right">Amount</th>
+                                <th className="px-6 py-3 font-medium w-12" />
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200">
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td className="px-6 py-4">
+                                            <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
+                                            <div className="h-3 bg-slate-100 rounded w-1/2"></div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="h-4 bg-slate-200 rounded w-full"></div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="h-6 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="h-4 bg-slate-200 rounded w-1/2 ml-auto mb-2"></div>
+                                            <div className="h-3 bg-slate-100 rounded w-1/3 ml-auto"></div>
+                                        </td>
+                                        <td className="px-6 py-4"></td>
+                                    </tr>
+                                ))
+                            ) : bills?.data?.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                                        <div className="flex flex-col items-center justify-center">
+                                            <FileText size={48} className="text-slate-300 mb-4" />
+                                            <p className="text-lg font-medium text-slate-700">No purchase bills found</p>
+                                            <p className="text-sm mt-1">Try adjusting filters or record a new vendor bill to get started.</p>
+                                            <Link
+                                                href="/purchases/bills/new"
+                                                className="mt-4 px-4 py-2 bg-[#F59E0B] text-[#0F172A] font-medium rounded-lg hover:bg-[#D97706] transition-colors"
+                                            >
+                                                Record Your First Bill
+                                            </Link>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                bills?.data?.map((bill: PurchaseBill) => (
+                                    <tr key={bill.id} className="hover:bg-slate-50 transition-colors group">
+                                        <td className="px-6 py-4">
+                                            <Link href={`/purchases/bills/${bill.id}`} className="block">
+                                                <div className="font-bold text-slate-800 group-hover:text-[#F59E0B] transition-colors">
+                                                    {bill.number}
+                                                </div>
+                                                <div className="text-sm text-slate-500 mt-0.5">
+                                                    {format(new Date(bill.date), 'dd MMM yyyy')}
+                                                    {bill.due_date && (
+                                                        <span className="ml-2 text-slate-400">
+                                                            (Due: {format(new Date(bill.due_date), 'dd MMM')})
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </Link>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <Link href={`/masters/parties/${bill.party.id}`} className="font-medium text-slate-700 hover:text-blue-600 transition-colors">
+                                                {bill.party.name}
+                                            </Link>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={cn(
+                                                "px-2.5 py-1 text-xs font-semibold rounded-full border border-transparent",
+                                                statusColors[bill.status]
+                                            )}>
+                                                {statusLabels[bill.status]}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="font-semibold text-slate-800">
+                                                ₹{bill.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                            </div>
+                                            {bill.balance > 0 && bill.balance < bill.total ? (
+                                                <div className="text-xs text-amber-600 mt-0.5 font-medium">
+                                                    Bal: ₹{bill.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                                </div>
+                                            ) : null}
+                                        </td>
+                                        <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex justify-end gap-2">
+                                                {bill.status !== 'draft' && bill.status !== 'cancelled' && (
+                                                    <button
+                                                        title="Make Payment"
+                                                        className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded"
+                                                    >
+                                                        <CreditCard size={18} />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    title="Download PDF"
+                                                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                                >
+                                                    <Download size={18} />
+                                                </button>
+                                                <button
+                                                    title="Send Email"
+                                                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded"
+                                                >
+                                                    <Send size={18} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Pagination */}
+                <div className="p-4 border-t border-slate-200 flex items-center justify-between text-sm text-slate-500">
+                    <div>Showing {bills?.data?.length || 0} bills</div>
+                    {bills?.last_page > 1 && (
+                        <div className="flex gap-1">
+                            <span>Page {bills?.current_page} of {bills?.last_page}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}

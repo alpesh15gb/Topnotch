@@ -1,0 +1,37 @@
+# Development overrides — auto-loaded by `docker compose up`
+# Enables bind mounts, dev server, and local ports
+
+version: '3.9'
+
+services:
+  app:
+    volumes:
+      - ./backend:/var/www
+      - storage_public:/var/www/storage/app/public
+    environment:
+      - APP_ENV=local
+
+  web:
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  nginx:
+    ports:
+      - "80:80"
+      - "443:443"
+
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
