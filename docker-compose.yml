@@ -70,7 +70,7 @@ services:
     image: nginx:alpine
     container_name: topnotch_nginx
     ports:
-      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8081:80"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - storage_public:/var/www/public/storage:ro
