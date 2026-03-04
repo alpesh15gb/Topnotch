@@ -17,8 +17,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'ensure.tenant.access' => \App\Http\Middleware\EnsureTenantAccess::class,
             'check.permission' => \App\Http\Middleware\CheckPermission::class,
         ]);
-
-        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
