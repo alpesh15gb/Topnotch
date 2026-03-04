@@ -30,12 +30,15 @@ export default function NewPartyPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate({
-      ...form,
-      credit_limit: form.credit_limit ? parseFloat(form.credit_limit) : null,
-      payment_terms_days: form.payment_terms_days ? parseInt(form.payment_terms_days) : null,
-      opening_balance: form.opening_balance ? parseFloat(form.opening_balance) : null,
-    });
+    const payload = Object.fromEntries(
+      Object.entries({
+        ...form,
+        credit_limit: form.credit_limit ? parseFloat(form.credit_limit) : null,
+        payment_terms_days: form.payment_terms_days ? parseInt(form.payment_terms_days) : null,
+        opening_balance: form.opening_balance ? parseFloat(form.opening_balance) : null,
+      }).map(([k, v]) => [k, v === '' ? null : v])
+    );
+    mutation.mutate(payload);
   };
 
   const field = (label: string, key: keyof typeof form, opts?: { type?: string; required?: boolean }) => (
