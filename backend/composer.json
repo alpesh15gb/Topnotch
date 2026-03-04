@@ -12,7 +12,6 @@
         "spatie/laravel-permission": "^6.0",
         "barryvdh/laravel-dompdf": "^3.0",
         "maatwebsite/excel": "^3.1",
-        "league/flysystem-google-cloud": "^3.0",
         "predis/predis": "^2.2",
         "guzzlehttp/guzzle": "^7.8"
     },
