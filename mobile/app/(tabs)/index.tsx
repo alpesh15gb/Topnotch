@@ -1,69 +1,81 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, StyleSheet } from 'react-native';
 import { TrendingUp, TrendingDown, Clock, Plus } from 'lucide-react-native';
+
+const C = { primary: '#0F172A', accent: '#F59E0B', bg: '#F8FAFC' };
 
 export default function DashboardScreen() {
   const [refreshing, setRefreshing] = React.useState(false);
-
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
   const kpis = [
-    { title: 'Today\'s Sales', amount: '₹12,450', icon: <TrendingUp color="#10B981" size={24} />, trend: '+12%' },
-    { title: 'Weekly Expenses', amount: '₹4,200', icon: <TrendingDown color="#EF4444" size={24} />, trend: '-5%' },
-    { title: 'Pending GST', amount: '₹1,500', icon: <Clock color="#F59E0B" size={24} />, trend: 'Due 15th' },
+    { title: "Today's Sales", amount: '₹12,450', icon: <TrendingUp color="#10B981" size={22} />, trend: '+12%', trendColor: '#10B981' },
+    { title: 'Weekly Expenses', amount: '₹4,200', icon: <TrendingDown color="#EF4444" size={22} />, trend: '-5%', trendColor: '#EF4444' },
+    { title: 'Pending GST', amount: '₹1,500', icon: <Clock color={C.accent} size={22} />, trend: 'Due 15th', trendColor: C.accent },
   ];
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <ScrollView
-        className="flex-1"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-        <View className="p-6">
-          <Text className="text-gray-500 text-sm font-medium uppercase tracking-wider">Financial Overview</Text>
-          <Text className="text-primary text-2xl font-bold mt-1">Hello, Admin!</Text>
+    <View style={s.container}>
+      <ScrollView style={{ flex: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+        <View style={s.content}>
+          <Text style={s.label}>FINANCIAL OVERVIEW</Text>
+          <Text style={s.heading}>Hello, Admin!</Text>
 
-          {/* KPI Cards */}
-          <View className="flex-row flex-wrap justify-between mt-6">
+          <View style={s.kpiRow}>
             {kpis.map((kpi, idx) => (
-              <View key={idx} className="bg-white p-4 rounded-2xl w-[48%] mb-4 shadow-sm border border-gray-100">
-                <View className="flex-row justify-between items-center mb-2">
-                  <View className="bg-gray-50 p-2 rounded-lg">{kpi.icon}</View>
-                  <Text className="text-xs font-bold text-gray-400">{kpi.trend}</Text>
+              <View key={idx} style={s.kpiCard}>
+                <View style={s.kpiTop}>
+                  <View style={s.kpiIcon}>{kpi.icon}</View>
+                  <Text style={[s.trend, { color: kpi.trendColor }]}>{kpi.trend}</Text>
                 </View>
-                <Text className="text-gray-500 text-xs font-medium">{kpi.title}</Text>
-                <Text className="text-primary text-lg font-bold mt-1">{kpi.amount}</Text>
+                <Text style={s.kpiTitle}>{kpi.title}</Text>
+                <Text style={s.kpiAmount}>{kpi.amount}</Text>
               </View>
             ))}
           </View>
 
-          {/* Recent Activity */}
-          <Text className="text-primary text-xl font-bold mt-4 mb-4">Recent Activity</Text>
+          <Text style={s.sectionTitle}>Recent Activity</Text>
           {[1, 2, 3, 4, 5].map((i) => (
-            <View key={i} className="bg-white p-4 rounded-2xl mb-3 flex-row items-center shadow-sm border border-gray-100">
-              <View className="w-10 h-10 bg-blue-50 rounded-full items-center justify-center mr-4">
-                <Text className="text-blue-600 font-bold">INV</Text>
+            <View key={i} style={s.activityRow}>
+              <View style={s.invBadge}><Text style={s.invText}>INV</Text></View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.invTitle}>Invoice #INV-00{i}</Text>
+                <Text style={s.invSub}>Customer Acme Corp • Today</Text>
               </View>
-              <View className="flex-1">
-                <Text className="text-primary font-bold">Invoice #INV-00{i}</Text>
-                <Text className="text-gray-500 text-xs">Customer Acme Corp • Today</Text>
-              </View>
-              <Text className="text-primary font-bold">₹2,500</Text>
+              <Text style={s.invAmount}>₹2,500</Text>
             </View>
           ))}
         </View>
       </ScrollView>
 
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        className="absolute bottom-6 right-6 w-14 h-14 bg-accent rounded-full items-center justify-center shadow-lg"
-        onPress={() => { }}
-      >
-        <Plus color="white" size={32} />
+      <TouchableOpacity style={s.fab}>
+        <Plus color="white" size={28} />
       </TouchableOpacity>
     </View>
   );
 }
+
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: C.bg },
+  content: { padding: 20 },
+  label: { fontSize: 11, fontWeight: '600', color: '#94A3B8', letterSpacing: 1, textTransform: 'uppercase' },
+  heading: { fontSize: 24, fontWeight: 'bold', color: C.primary, marginTop: 4 },
+  kpiRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 20 },
+  kpiCard: { backgroundColor: '#fff', borderRadius: 16, padding: 14, width: '48%', marginBottom: 14, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 2, borderWidth: 1, borderColor: '#F1F5F9' },
+  kpiTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  kpiIcon: { backgroundColor: '#F8FAFC', padding: 6, borderRadius: 8 },
+  trend: { fontSize: 11, fontWeight: 'bold' },
+  kpiTitle: { fontSize: 11, color: '#64748B', fontWeight: '500' },
+  kpiAmount: { fontSize: 18, fontWeight: 'bold', color: C.primary, marginTop: 2 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: C.primary, marginTop: 8, marginBottom: 12 },
+  activityRow: { backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 1, borderWidth: 1, borderColor: '#F1F5F9' },
+  invBadge: { width: 40, height: 40, backgroundColor: '#EFF6FF', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  invText: { color: '#3B82F6', fontWeight: 'bold', fontSize: 10 },
+  invTitle: { fontSize: 14, fontWeight: 'bold', color: C.primary },
+  invSub: { fontSize: 12, color: '#94A3B8', marginTop: 2 },
+  invAmount: { fontSize: 14, fontWeight: 'bold', color: C.primary },
+  fab: { position: 'absolute', bottom: 24, right: 24, width: 56, height: 56, backgroundColor: C.accent, borderRadius: 28, alignItems: 'center', justifyContent: 'center', elevation: 6 },
+});
