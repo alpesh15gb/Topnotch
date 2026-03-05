@@ -48,7 +48,8 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { token, isHydrated } = useAuthStore((state) => ({ token: state.token, isHydrated: state.isHydrated }));
+  const token = useAuthStore((state) => state.token);
+  const isHydrated = useAuthStore((state) => state.isHydrated);
   const segments = useSegments();
   const router = useRouter();
 
