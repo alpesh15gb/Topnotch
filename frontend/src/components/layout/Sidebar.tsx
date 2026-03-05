@@ -167,9 +167,7 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
-        <div className="w-8 h-8 bg-[#F59E0B] rounded-lg flex items-center justify-center flex-shrink-0">
-          <span className="text-[#0F172A] font-bold text-sm">TN</span>
-        </div>
+        <img src="/logo.png" alt="TopNotch" className="w-8 h-8 rounded-lg flex-shrink-0 object-contain bg-white p-0.5" />
         {!collapsed && (
           <span className="text-white font-bold text-lg tracking-tight">TopNotch</span>
         )}

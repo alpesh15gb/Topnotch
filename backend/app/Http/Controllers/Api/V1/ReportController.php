@@ -14,19 +14,23 @@ use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
-    public function __construct(private AccountingService $accountingService) {}
+    public function __construct(private AccountingService $accountingService)
+    {
+    }
 
     public function salesSummary(Request $request): JsonResponse
     {
-        $request->validate(['from_date' => 'required|date', 'to_date' => 'required|date']);
+        $fromDate = $request->input('from_date') ?: now()->startOfMonth()->toDateString();
+        $toDate = $request->input('to_date') ?: now()->endOfMonth()->toDateString();
 
         $invoices = Invoice::whereIn('status', ['posted', 'partially_paid', 'paid', 'overdue'])
-            ->whereBetween('date', [$request->from_date, $request->to_date])
+            ->whereBetween('date', [$fromDate, $toDate])
             ->get();
 
         return response()->json([
             'total_invoices' => $invoices->count(),
             'total_sales' => $invoices->sum('total'),
+            'total_revenue' => $invoices->sum('total'),
             'total_collected' => $invoices->sum('amount_paid'),
             'total_outstanding' => $invoices->sum('balance'),
             'total_tax' => $invoices->sum('tax_amount'),
@@ -41,13 +45,13 @@ class ReportController extends Controller
             ->get()
             ->groupBy('party_id')
             ->map(function ($group) {
-                return [
-                    'party' => $group->first()->party,
-                    'total_outstanding' => $group->sum('balance'),
-                    'invoices_count' => $group->count(),
-                    'oldest_invoice_date' => $group->min('date'),
-                ];
-            })
+            return [
+            'party' => $group->first()->party,
+            'total_outstanding' => $group->sum('balance'),
+            'invoices_count' => $group->count(),
+            'oldest_invoice_date' => $group->min('date'),
+            ];
+        })
             ->values();
 
         return response()->json($invoices);
@@ -55,13 +59,14 @@ class ReportController extends Controller
 
     public function purchaseSummary(Request $request): JsonResponse
     {
-        $request->validate(['from_date' => 'required|date', 'to_date' => 'required|date']);
+        $fromDate = $request->input('from_date') ?: now()->startOfMonth()->toDateString();
+        $toDate = $request->input('to_date') ?: now()->endOfMonth()->toDateString();
 
         $bills = PurchaseBill::whereIn('status', ['posted', 'partially_paid', 'paid'])
-            ->whereBetween('date', [$request->from_date, $request->to_date])
+            ->whereBetween('date', [$fromDate, $toDate])
             ->get();
 
-        $expenses = Expense::whereBetween('date', [$request->from_date, $request->to_date])->get();
+        $expenses = Expense::whereBetween('date', [$fromDate, $toDate])->get();
 
         return response()->json([
             'total_bills' => $bills->count(),
@@ -81,12 +86,12 @@ class ReportController extends Controller
             ->get()
             ->groupBy('party_id')
             ->map(function ($group) {
-                return [
-                    'party' => $group->first()->party,
-                    'total_outstanding' => $group->sum('balance'),
-                    'bills_count' => $group->count(),
-                ];
-            })
+            return [
+            'party' => $group->first()->party,
+            'total_outstanding' => $group->sum('balance'),
+            'bills_count' => $group->count(),
+            ];
+        })
             ->values();
 
         return response()->json($bills);
@@ -149,13 +154,13 @@ class ReportController extends Controller
             ->when($request->to_date, fn($q) => $q->whereDate('date', '<=', $request->to_date))
             ->get()
             ->map(fn($inv) => [
-                'type' => 'invoice',
-                'date' => $inv->date,
-                'reference' => $inv->number,
-                'debit' => $inv->total,
-                'credit' => 0,
-                'balance' => $inv->balance,
-            ]);
+        'type' => 'invoice',
+        'date' => $inv->date,
+        'reference' => $inv->number,
+        'debit' => $inv->total,
+        'credit' => 0,
+        'balance' => $inv->balance,
+        ]);
 
         $payments = $party->invoices()
             ->with('payments')
@@ -164,13 +169,13 @@ class ReportController extends Controller
             ->get()
             ->flatMap->payments
             ->map(fn($pmt) => [
-                'type' => 'payment',
-                'date' => $pmt->date,
-                'reference' => 'Payment',
-                'debit' => 0,
-                'credit' => $pmt->amount,
-                'balance' => 0,
-            ]);
+        'type' => 'payment',
+        'date' => $pmt->date,
+        'reference' => 'Payment',
+        'debit' => 0,
+        'credit' => $pmt->amount,
+        'balance' => 0,
+        ]);
 
         $transactions = $invoices->concat($payments)->sortBy('date')->values();
 

@@ -44,7 +44,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#0F172A] to-[#1e3a5f] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#0F172A]">TopNotch</h1>
+          <img src="/logo.png" alt="TopNotch" className="h-20 mx-auto object-contain mb-3" />
           <p className="text-gray-500 mt-1">GST-Compliant Accounting</p>
         </div>
 

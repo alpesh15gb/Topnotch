@@ -11,6 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <title>TopNotch — GST Accounting</title>
         <meta name="description" content="Multi-tenant GST-compliant accounting for Indian SMBs" />
+        <link rel="icon" href="/logo.png" type="image/png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
       </head>
       <body>

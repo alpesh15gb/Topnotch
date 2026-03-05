@@ -54,7 +54,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://topnotch.apextime.in/api}
+
     container_name: topnotch_web
     environment:
       - NODE_ENV=production

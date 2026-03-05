@@ -12,15 +12,15 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $user = User::firstOrCreate(
-            ['email' => 'demo@topnotch.app'],
-            [
-                'name' => 'Demo Owner',
-                'password' => Hash::make('password'),
-                'is_super_admin' => false,
-            ]
+        ['email' => env('DEMO_USER_EMAIL', 'demo@topnotch.app')],
+        [
+            'name' => env('DEMO_USER_NAME', 'Demo Owner'),
+            'password' => Hash::make(env('DEMO_USER_PASSWORD', 'password')),
+            'is_super_admin' => false,
+        ]
         );
 
-        $tenant = Tenant::where('subdomain', 'demo')->first();
+        $tenant = Tenant::where('subdomain', env('DEMO_TENANT_SUBDOMAIN', 'demo'))->first();
 
         if ($tenant && !$tenant->users()->where('user_id', $user->id)->exists()) {
             $tenant->users()->attach($user->id, [
@@ -32,14 +32,14 @@ class UserSeeder extends Seeder
 
         // Super admin
         User::firstOrCreate(
-            ['email' => 'admin@topnotch.app'],
-            [
-                'name' => 'Super Admin',
-                'password' => Hash::make('admin_password'),
-                'is_super_admin' => true,
-            ]
+        ['email' => env('ADMIN_EMAIL', 'admin@topnotch.app')],
+        [
+            'name' => 'Super Admin',
+            'password' => Hash::make(env('ADMIN_PASSWORD', 'admin_password')),
+            'is_super_admin' => true,
+        ]
         );
 
-        $this->command->info("Users seeded. Login: demo@topnotch.app / password");
+        $this->command->info("Users seeded. Login: " . env('DEMO_USER_EMAIL', 'demo@topnotch.app') . " / " . env('DEMO_USER_PASSWORD', 'password'));
     }
 }

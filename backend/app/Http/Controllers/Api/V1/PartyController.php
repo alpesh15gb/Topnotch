@@ -13,18 +13,24 @@ class PartyController extends Controller
     {
         $query = Party::query();
 
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
+        // Filter by type if provided
+        if ($request->has('type') && in_array($request->get('type'), ['customer', 'supplier', 'both'])) {
+            $query->where('type', $request->get('type'));
         }
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('name', 'ilike', "%{$request->search}%")
-                  ->orWhere('gstin', 'ilike', "%{$request->search}%")
-                  ->orWhere('email', 'ilike', "%{$request->search}%");
+
+        // Filter by is_active if provided
+        if ($request->has('is_active')) {
+            $query->where('is_active', (bool)$request->get('is_active'));
+        }
+
+        // Search by name, email, or phone
+        if ($request->has('search')) {
+            $searchTerm = '%' . strtolower($request->get('search')) . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->whereRaw('LOWER(name) LIKE ?', [$searchTerm])
+                    ->orWhereRaw('LOWER(email) LIKE ?', [$searchTerm])
+                    ->orWhereRaw('LOWER(phone) LIKE ?', [$searchTerm]);
             });
-        }
-        if ($request->boolean('active_only', true)) {
-            $query->where('is_active', true);
         }
 
         $parties = $query->orderBy('name')->paginate($request->get('per_page', 20));
@@ -52,6 +58,11 @@ class PartyController extends Controller
             'opening_balance' => 'nullable|numeric',
             'balance_type' => 'nullable|in:Dr,Cr',
         ]);
+
+        // Apply defaults for non-nullable DB columns that frontend may send as null
+        $validated['credit_limit'] = $validated['credit_limit'] ?? 0;
+        $validated['payment_terms_days'] = $validated['payment_terms_days'] ?? 30;
+        $validated['opening_balance'] = $validated['opening_balance'] ?? 0;
 
         $party = Party::create($validated);
 
@@ -109,7 +120,7 @@ class PartyController extends Controller
 
         return response()->json([
             'gstin' => $gstin,
-            'is_valid' => (bool) $isValid,
+            'is_valid' => (bool)$isValid,
             'state_code' => $isValid ? substr($gstin, 0, 2) : null,
         ]);
     }

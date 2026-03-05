@@ -39,7 +39,7 @@ const reportCategories: ReportCategory[] = [
             {
                 title: "GSTR-2B Reconciliation",
                 description: "Auto-drafted ITC statement for reconciliation.",
-                href: "#",
+                href: "/reports/gstr2b",
                 icon: <FileSpreadsheet size={24} className="text-emerald-500" />,
                 badges: ["Reconciliation"]
             }

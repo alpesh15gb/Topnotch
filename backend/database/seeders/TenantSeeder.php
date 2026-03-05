@@ -15,35 +15,35 @@ class TenantSeeder extends Seeder
     {
         // Create demo tenant
         $tenant = Tenant::firstOrCreate(
-            ['subdomain' => 'demo'],
-            [
-                'name' => 'Demo Company Pvt Ltd',
-                'schema_name' => 'tenant_demo',
-                'plan' => 'professional',
-                'status' => 'active',
-                'owner_email' => 'demo@topnotch.app',
-            ]
+        ['subdomain' => env('DEMO_TENANT_SUBDOMAIN', 'demo')],
+        [
+            'name' => env('DEMO_TENANT_NAME', 'Demo Company Pvt Ltd'),
+            'schema_name' => 'tenant_' . env('DEMO_TENANT_SUBDOMAIN', 'demo'),
+            'plan' => 'professional',
+            'status' => 'active',
+            'owner_email' => env('DEMO_USER_EMAIL', 'demo@topnotch.app'),
+        ]
         );
 
         TenantSetting::firstOrCreate(
-            ['tenant_id' => $tenant->id],
-            [
-                'gstin' => '27AABCU9603R1ZX',
-                'pan' => 'AABCU9603R',
-                'address' => '123 Business Park, Andheri East',
-                'city' => 'Mumbai',
-                'state' => 'Maharashtra',
-                'state_code' => '27',
-                'pincode' => '400069',
-                'phone' => '+91 98765 43210',
-                'email' => 'billing@demo.com',
-                'fiscal_year_start' => 4,
-                'currency' => 'INR',
-                'decimal_places' => 2,
-                'invoice_prefix' => 'INV',
-                'invoice_footer_notes' => 'Thank you for your business!',
-                'terms_and_conditions' => 'Payment due within 30 days. Late payments subject to 2% monthly interest.',
-            ]
+        ['tenant_id' => $tenant->id],
+        [
+            'gstin' => env('DEMO_TENANT_GSTIN', '27AABCU9603R1ZX'),
+            'pan' => env('DEMO_TENANT_PAN', 'AABCU9603R'),
+            'address' => env('DEMO_TENANT_ADDRESS', '123 Business Park, Andheri East'),
+            'city' => env('DEMO_TENANT_CITY', 'Mumbai'),
+            'state' => env('DEMO_TENANT_STATE', 'Maharashtra'),
+            'state_code' => env('DEMO_TENANT_STATE_CODE', '27'),
+            'pincode' => env('DEMO_TENANT_PINCODE', '400069'),
+            'phone' => env('DEMO_TENANT_PHONE', '+91 98765 43210'),
+            'email' => env('DEMO_TENANT_EMAIL', 'billing@demo.com'),
+            'fiscal_year_start' => env('DEMO_TENANT_FY_START', 4),
+            'currency' => env('DEMO_TENANT_CURRENCY', 'INR'),
+            'decimal_places' => 2,
+            'invoice_prefix' => 'INV',
+            'invoice_footer_notes' => 'Thank you for your business!',
+            'terms_and_conditions' => 'Payment due within 30 days.',
+        ]
         );
 
         $this->command->info("Demo tenant created: ID {$tenant->id}");
