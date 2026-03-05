@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Search, Filter, Plus } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 const C = { primary: '#0F172A', accent: '#F59E0B', bg: '#F8FAFC' };
 
 export default function SalesScreen() {
+  const router = useRouter();
   return (
     <View style={s.container}>
       <View style={s.searchBar}>
@@ -18,11 +20,11 @@ export default function SalesScreen() {
           <View style={s.emptyIcon}><Search color="#94A3B8" size={32} /></View>
           <Text style={s.emptyTitle}>No sales orders found</Text>
           <Text style={s.emptySub}>Tap the + button to create a new one</Text>
-          <TouchableOpacity style={s.btn}><Text style={s.btnText}>Create Order</Text></TouchableOpacity>
+          <TouchableOpacity style={s.btn} onPress={() => router.push('/sales/new' as any)}><Text style={s.btnText}>Create Order</Text></TouchableOpacity>
         </View>
       </ScrollView>
 
-      <TouchableOpacity style={s.fab}><Plus color="white" size={28} /></TouchableOpacity>
+      <TouchableOpacity style={s.fab} onPress={() => router.push('/sales/new' as any)}><Plus color="white" size={28} /></TouchableOpacity>
     </View>
   );
 }

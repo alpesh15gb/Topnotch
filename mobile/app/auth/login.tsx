@@ -22,7 +22,8 @@ export default function LoginScreen() {
             setAuth(user, token);
             router.replace('/(tabs)');
         } catch (error: any) {
-            Alert.alert('Login Failed', error.response?.data?.message || 'Something went wrong');
+            console.log('Login error:', JSON.stringify(error?.response?.data), error?.message, error?.code);
+            Alert.alert('Login Failed', error.response?.data?.message || error?.message || 'Something went wrong');
         } finally {
             setLoading(false);
         }

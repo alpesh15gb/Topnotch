@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, StyleSheet } from 'react-native';
-import { TrendingUp, TrendingDown, Clock, Plus } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, Clock, Plus, FileText, ShoppingCart, CreditCard } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 const C = { primary: '#0F172A', accent: '#F59E0B', bg: '#F8FAFC' };
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const [refreshing, setRefreshing] = React.useState(false);
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -12,9 +14,15 @@ export default function DashboardScreen() {
   }, []);
 
   const kpis = [
-    { title: "Today's Sales", amount: '₹12,450', icon: <TrendingUp color="#10B981" size={22} />, trend: '+12%', trendColor: '#10B981' },
-    { title: 'Weekly Expenses', amount: '₹4,200', icon: <TrendingDown color="#EF4444" size={22} />, trend: '-5%', trendColor: '#EF4444' },
-    { title: 'Pending GST', amount: '₹1,500', icon: <Clock color={C.accent} size={22} />, trend: 'Due 15th', trendColor: C.accent },
+    { title: "Today's Sales", amount: '₹12,450', icon: <TrendingUp color="#10B981" size={22} />, trend: '+12%', trendColor: '#10B981', route: '/(tabs)/sales' },
+    { title: 'Weekly Expenses', amount: '₹4,200', icon: <TrendingDown color="#EF4444" size={22} />, trend: '-5%', trendColor: '#EF4444', route: '/(tabs)/purchases' },
+    { title: 'Pending GST', amount: '₹1,500', icon: <Clock color={C.accent} size={22} />, trend: 'Due 15th', trendColor: C.accent, route: '/(tabs)/sales' },
+  ];
+
+  const quickActions = [
+    { label: 'New Invoice', icon: <FileText color="#fff" size={20} />, route: '/sales/new', bg: '#3B82F6' },
+    { label: 'New Purchase', icon: <ShoppingCart color="#fff" size={20} />, route: '/purchases/new', bg: '#8B5CF6' },
+    { label: 'New Expense', icon: <CreditCard color="#fff" size={20} />, route: '/(tabs)/purchases', bg: '#EF4444' },
   ];
 
   return (
@@ -24,34 +32,47 @@ export default function DashboardScreen() {
           <Text style={s.label}>FINANCIAL OVERVIEW</Text>
           <Text style={s.heading}>Hello, Admin!</Text>
 
+          {/* KPI Cards */}
           <View style={s.kpiRow}>
             {kpis.map((kpi, idx) => (
-              <View key={idx} style={s.kpiCard}>
+              <TouchableOpacity key={idx} style={s.kpiCard} onPress={() => router.push(kpi.route as any)}>
                 <View style={s.kpiTop}>
                   <View style={s.kpiIcon}>{kpi.icon}</View>
                   <Text style={[s.trend, { color: kpi.trendColor }]}>{kpi.trend}</Text>
                 </View>
                 <Text style={s.kpiTitle}>{kpi.title}</Text>
                 <Text style={s.kpiAmount}>{kpi.amount}</Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
 
-          <Text style={s.sectionTitle}>Recent Activity</Text>
+          {/* Quick Actions */}
+          <Text style={s.sectionTitle}>Quick Actions</Text>
+          <View style={s.actionsRow}>
+            {quickActions.map((action, idx) => (
+              <TouchableOpacity key={idx} style={[s.actionBtn, { backgroundColor: action.bg }]} onPress={() => router.push(action.route as any)}>
+                {action.icon}
+                <Text style={s.actionLabel}>{action.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Recent Activity */}
+          <Text style={s.sectionTitle}>Recent Invoices</Text>
           {[1, 2, 3, 4, 5].map((i) => (
-            <View key={i} style={s.activityRow}>
+            <TouchableOpacity key={i} style={s.activityRow} onPress={() => router.push('/sales/new' as any)}>
               <View style={s.invBadge}><Text style={s.invText}>INV</Text></View>
               <View style={{ flex: 1 }}>
                 <Text style={s.invTitle}>Invoice #INV-00{i}</Text>
                 <Text style={s.invSub}>Customer Acme Corp • Today</Text>
               </View>
               <Text style={s.invAmount}>₹2,500</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
 
-      <TouchableOpacity style={s.fab}>
+      <TouchableOpacity style={s.fab} onPress={() => router.push('/sales/new' as any)}>
         <Plus color="white" size={28} />
       </TouchableOpacity>
     </View>
@@ -71,6 +92,9 @@ const s = StyleSheet.create({
   kpiTitle: { fontSize: 11, color: '#64748B', fontWeight: '500' },
   kpiAmount: { fontSize: 18, fontWeight: 'bold', color: C.primary, marginTop: 2 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: C.primary, marginTop: 8, marginBottom: 12 },
+  actionsRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  actionBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 14, gap: 6 },
+  actionLabel: { color: '#fff', fontSize: 11, fontWeight: '700', textAlign: 'center' },
   activityRow: { backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 1, borderWidth: 1, borderColor: '#F1F5F9' },
   invBadge: { width: 40, height: 40, backgroundColor: '#EFF6FF', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   invText: { color: '#3B82F6', fontWeight: 'bold', fontSize: 10 },
