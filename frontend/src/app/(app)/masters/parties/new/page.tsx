@@ -6,6 +6,7 @@ import { useMutation } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 const INDIAN_STATES = [
   'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat',
@@ -23,9 +24,22 @@ export default function NewPartyPage() {
     credit_limit: '', payment_terms_days: '', opening_balance: '', balance_type: 'Dr',
   });
 
+  const [apiErrors, setApiErrors] = useState<Record<string, string[]>>({});
+
   const mutation = useMutation({
     mutationFn: (data: object) => api.post('/v1/parties', data),
-    onSuccess: () => router.push('/masters/parties'),
+    onSuccess: () => {
+      toast.success('Party saved successfully');
+      router.push('/masters/parties');
+    },
+    onError: (err: any) => {
+      const errors = err?.response?.data?.errors;
+      const message = err?.response?.data?.message;
+      if (errors) {
+        setApiErrors(errors);
+      }
+      toast.error(message || 'Failed to save party');
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -124,7 +138,16 @@ export default function NewPartyPage() {
           </div>
         </div>
 
-        {mutation.isError && <p className="text-red-500 text-sm">Failed to save. Please check your inputs.</p>}
+        {Object.keys(apiErrors).length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700 space-y-1">
+            {Object.entries(apiErrors).map(([field, msgs]) => (
+              <p key={field}><span className="font-semibold capitalize">{field.replace('_', ' ')}:</span> {msgs[0]}</p>
+            ))}
+          </div>
+        )}
+        {mutation.isError && Object.keys(apiErrors).length === 0 && (
+          <p className="text-red-500 text-sm">{(mutation.error as any)?.response?.data?.message || 'Failed to save. Please check your inputs.'}</p>
+        )}
 
         <div className="flex gap-3">
           <button type="submit" disabled={mutation.isPending} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium">
