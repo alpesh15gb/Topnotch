@@ -24,7 +24,7 @@ export default function LoansPage() {
         queryFn: async () => {
             const res = await api.get('/v1/loans', {
                 params: { search }
-            }).catch(() => ({ data: { data: [], current_page: 1, last_page: 1 } })); // Mock fallback
+            });
             return res.data;
         }
     });

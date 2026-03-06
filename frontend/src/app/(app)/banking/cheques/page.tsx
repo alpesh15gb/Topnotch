@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { Plus, Search, FileSignature, CheckCircle2, XCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface Cheque {
     id: number;
@@ -36,6 +38,8 @@ const typeColors = {
 };
 
 export default function ChequesPage() {
+    const router = useRouter();
+    const qc = useQueryClient();
     const [search, setSearch] = useState('');
     const [filterType, setFilterType] = useState('');
 
@@ -44,9 +48,18 @@ export default function ChequesPage() {
         queryFn: async () => {
             const res = await api.get('/v1/cheques', {
                 params: { search, type: filterType }
-            }).catch(() => ({ data: { data: [], current_page: 1, last_page: 1 } })); // Mock fallback
+            });
             return res.data;
         }
+    });
+
+    const updateStatus = useMutation({
+        mutationFn: ({ id, status }: { id: number; status: string }) => api.put(`/v1/cheques/${id}`, { status }),
+        onSuccess: () => {
+            toast.success('Cheque status updated');
+            qc.invalidateQueries({ queryKey: ['cheques'] });
+        },
+        onError: () => toast.error('Failed to update status'),
     });
 
     return (
@@ -123,7 +136,7 @@ export default function ChequesPage() {
                                 </tr>
                             ) : (
                                 cheques?.data?.map((cheque: Cheque) => (
-                                    <tr key={cheque.id} className="hover:bg-slate-50 transition-colors group">
+                                    <tr key={cheque.id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => router.push(`/banking/cheques/${cheque.id}`)}>
                                         <td className="px-6 py-4">
                                             <div className="font-bold text-slate-800">
                                                 #{cheque.number}
@@ -171,12 +184,14 @@ export default function ChequesPage() {
                                                         <button
                                                             title="Mark Cleared"
                                                             className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded"
+                                                            onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: cheque.id, status: 'cleared' }); }}
                                                         >
                                                             <CheckCircle2 size={18} />
                                                         </button>
                                                         <button
                                                             title="Mark Bounced"
                                                             className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded"
+                                                            onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: cheque.id, status: 'bounced' }); }}
                                                         >
                                                             <XCircle size={18} />
                                                         </button>

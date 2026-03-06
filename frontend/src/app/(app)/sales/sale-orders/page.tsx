@@ -46,7 +46,7 @@ export default function SaleOrdersPage() {
         queryFn: async () => {
             const res = await api.get('/v1/sale-orders', {
                 params: { search, status: statusFilter }
-            }).catch(() => ({ data: { data: [], current_page: 1, last_page: 1 } })); // Mock fallback
+            });
             return res.data;
         }
     });

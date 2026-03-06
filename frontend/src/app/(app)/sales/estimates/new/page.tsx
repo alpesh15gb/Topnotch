@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
@@ -28,15 +28,12 @@ interface Item {
 interface Party {
     id: number;
     name: string;
-    supply_state: string;
 }
 
 interface EstimateFormData {
     party_id: number | '';
     date: string;
     expiry_date: string;
-    supply_state: string;
-    is_igst: boolean;
     notes: string;
     items: {
         item_id: number | '';
@@ -47,41 +44,30 @@ interface EstimateFormData {
         tax_rate_id: number | '';
         tax_rate_obj?: TaxRate | null;
     }[];
-    discount: number;
 }
 
 export default function NewEstimatePage() {
     const router = useRouter();
-    const [activeTenantState, setActiveTenantState] = useState('Maharashtra');
 
     const { control, handleSubmit, watch, setValue } = useForm<EstimateFormData>({
         defaultValues: {
             party_id: '',
             date: new Date().toISOString().split('T')[0],
             expiry_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-            supply_state: '',
-            is_igst: false,
             notes: '',
-            discount: 0,
             items: [
                 { item_id: '', description: '', qty: 1, unit_price: 0, discount_pct: 0, tax_rate_id: '' }
             ]
         }
     });
 
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: 'items'
-    });
+    const { fields, append, remove } = useFieldArray({ control, name: 'items' });
 
     const watchItems = watch('items');
-    const watchDiscount = watch('discount');
-    const watchIsIgst = watch('is_igst');
 
-    // Load masters component data
     const { data: parties } = useQuery({
         queryKey: ['parties', 'customers'],
-        queryFn: async () => (await api.get('/v1/parties?type=customer')).data.data as Party[]
+        queryFn: async () => (await api.get('/v1/parties', { params: { type: 'customer' } })).data.data as Party[]
     });
 
     const { data: itemsList } = useQuery({
@@ -94,43 +80,26 @@ export default function NewEstimatePage() {
         queryFn: async () => (await api.get('/v1/tax-rates')).data as TaxRate[]
     });
 
-    // Calculate totals
     const totals = useMemo(() => {
         let subtotal = 0;
         let cgstAmount = 0;
         let sgstAmount = 0;
-        let igstAmount = 0;
 
         watchItems.forEach((item) => {
             const lineTotal = (Number(item.qty) || 0) * (Number(item.unit_price) || 0) * (1 - (Number(item.discount_pct) || 0) / 100);
             subtotal += lineTotal;
-
             if (item.tax_rate_obj) {
                 const rate = item.tax_rate_obj.rate;
-                if (watchIsIgst) {
-                    igstAmount += (lineTotal * rate) / 100;
-                } else {
-                    cgstAmount += (lineTotal * (rate / 2)) / 100;
-                    sgstAmount += (lineTotal * (rate / 2)) / 100;
-                }
+                cgstAmount += (lineTotal * (rate / 2)) / 100;
+                sgstAmount += (lineTotal * (rate / 2)) / 100;
             }
         });
 
-        const discountAmount = Number(watchDiscount) || 0;
-        const taxTotal = cgstAmount + sgstAmount + igstAmount;
+        const taxTotal = cgstAmount + sgstAmount;
+        const grandTotal = subtotal + taxTotal;
 
-        const grandTotal = subtotal - discountAmount + taxTotal;
-
-        return { subtotal, cgstAmount, sgstAmount, igstAmount, taxTotal, grandTotal };
-    }, [watchItems, watchDiscount, watchIsIgst]);
-
-    const handlePartyChange = (partyId: number) => {
-        const party = parties?.find(p => p.id === partyId);
-        if (party) {
-            setValue('supply_state', party.supply_state || '');
-            setValue('is_igst', party.supply_state !== activeTenantState);
-        }
-    };
+        return { subtotal, cgstAmount, sgstAmount, taxTotal, grandTotal };
+    }, [watchItems]);
 
     const handleItemSelect = (index: number, itemId: number) => {
         const item = itemsList?.find(i => i.id === itemId);
@@ -148,12 +117,32 @@ export default function NewEstimatePage() {
     };
 
     const saveMutation = useMutation({
-        mutationFn: async (data: any) => {
-            return api.post('/v1/estimates', data);
+        mutationFn: async (data: EstimateFormData) => {
+            const payload = {
+                party_id: data.party_id,
+                date: data.date,
+                expiry_date: data.expiry_date,
+                notes: data.notes,
+                items: data.items.map(item => {
+                    const rate = item.tax_rate_obj?.rate || 0;
+                    return {
+                        item_id: item.item_id || null,
+                        description: item.description,
+                        qty: Number(item.qty),
+                        unit_price: Number(item.unit_price),
+                        discount_pct: Number(item.discount_pct),
+                        tax_rate_id: item.tax_rate_id || null,
+                        cgst_rate: rate / 2,
+                        sgst_rate: rate / 2,
+                        igst_rate: 0,
+                    };
+                })
+            };
+            return api.post('/v1/estimates', payload);
         },
-        onSuccess: (res) => {
+        onSuccess: () => {
             toast.success('Estimate created successfully');
-            router.push(`/sales/estimates/${res.data.id}`);
+            router.push('/sales/estimates');
         },
         onError: (err: any) => {
             toast.error(err.response?.data?.message || 'Failed to create estimate');
@@ -161,20 +150,7 @@ export default function NewEstimatePage() {
     });
 
     const onSubmit = (data: EstimateFormData) => {
-        // Add tax rate breakdowns to payload
-        const payload = {
-            ...data,
-            items: data.items.map(item => {
-                const rate = item.tax_rate_obj?.rate || 0;
-                return {
-                    ...item,
-                    cgst_rate: data.is_igst ? 0 : rate / 2,
-                    sgst_rate: data.is_igst ? 0 : rate / 2,
-                    igst_rate: data.is_igst ? rate : 0,
-                };
-            })
-        };
-        saveMutation.mutate(payload);
+        saveMutation.mutate(data);
     };
 
     return (
@@ -190,10 +166,12 @@ export default function NewEstimatePage() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Top Details */}
+                {/* Header Details */}
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="col-span-1 md:col-span-3 lg:col-span-1">
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Customer <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                            Customer <span className="text-red-500">*</span>
+                        </label>
                         <Controller
                             control={control}
                             name="party_id"
@@ -203,11 +181,7 @@ export default function NewEstimatePage() {
                                     <select
                                         {...field}
                                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent bg-white"
-                                        onChange={(e) => {
-                                            const val = Number(e.target.value);
-                                            field.onChange(val);
-                                            handlePartyChange(val);
-                                        }}
+                                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : '')}
                                     >
                                         <option value="">Select Customer...</option>
                                         {parties?.map(p => (
@@ -221,7 +195,9 @@ export default function NewEstimatePage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Estimate Date <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                            Estimate Date <span className="text-red-500">*</span>
+                        </label>
                         <Controller control={control} name="date" rules={{ required: true }} render={({ field }) => (
                             <input type="date" {...field} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#F59E0B]" />
                         )} />
@@ -233,32 +209,9 @@ export default function NewEstimatePage() {
                             <input type="date" {...field} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#F59E0B]" />
                         )} />
                     </div>
-
-                    <div className="col-span-1 md:col-span-3 flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100 mt-2">
-                        <div>
-                            <p className="text-sm font-medium text-slate-700">Tax Setup</p>
-                            <p className="text-xs text-slate-500 mt-0.5">Determine GST types based on supply location</p>
-                        </div>
-
-                        <div className="flex items-center gap-6">
-                            <div className="flex items-center gap-2">
-                                <label className="text-sm text-slate-600">Place of Supply:</label>
-                                <Controller control={control} name="supply_state" render={({ field }) => (
-                                    <input type="text" {...field} className="px-2 py-1 text-sm border border-slate-300 rounded w-32" placeholder="State" />
-                                )} />
-                            </div>
-
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <Controller control={control} name="is_igst" render={({ field }) => (
-                                    <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)} className="w-4 h-4 text-[#F59E0B] rounded focus:ring-[#F59E0B]" />
-                                )} />
-                                <span className="text-sm font-medium text-slate-700">Inter-State (IGST)</span>
-                            </label>
-                        </div>
-                    </div>
                 </div>
 
-                {/* ... Similar Line Items as Invoice form ... */}
+                {/* Line Items */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-4 border-b border-slate-200">
                         <h2 className="text-lg font-bold text-slate-800">Line Items</h2>
@@ -267,12 +220,12 @@ export default function NewEstimatePage() {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                                    <th className="px-4 py-3 font-medium w-64">Item</th>
+                                    <th className="px-4 py-3 font-medium w-56">Item</th>
                                     <th className="px-4 py-3 font-medium">Description</th>
                                     <th className="px-4 py-3 font-medium w-24 text-right">Qty</th>
                                     <th className="px-4 py-3 font-medium w-32 text-right">Price</th>
                                     <th className="px-4 py-3 font-medium w-24 text-right">Disc. %</th>
-                                    <th className="px-4 py-3 font-medium w-32">Tax Rate</th>
+                                    <th className="px-4 py-3 font-medium w-36">Tax Rate</th>
                                     <th className="px-4 py-3 font-medium w-32 text-right">Amount</th>
                                     <th className="w-12"></th>
                                 </tr>
@@ -285,14 +238,14 @@ export default function NewEstimatePage() {
                                     return (
                                         <tr key={field.id} className="align-top group hover:bg-slate-50 transition-colors">
                                             <td className="px-4 py-3">
-                                                <Controller control={control} name={`items.${index}.item_id`} render={({ field: selectField }) => (
+                                                <Controller control={control} name={`items.${index}.item_id`} render={({ field: sf }) => (
                                                     <select
-                                                        {...selectField}
+                                                        {...sf}
                                                         className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-[#F59E0B] bg-white"
                                                         onChange={(e) => {
                                                             const val = e.target.value ? Number(e.target.value) : '';
-                                                            selectField.onChange(val);
-                                                            if (val !== '') handleItemSelect(index, val);
+                                                            sf.onChange(val);
+                                                            if (val !== '') handleItemSelect(index, val as number);
                                                         }}
                                                     >
                                                         <option value="">Custom Item</option>
@@ -301,34 +254,35 @@ export default function NewEstimatePage() {
                                                 )} />
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Controller control={control} name={`items.${index}.description`} render={({ field: descField }) => (
-                                                    <textarea {...descField} rows={1} className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-[#F59E0B] resize-y" placeholder="Item description..." />
+                                                <Controller control={control} name={`items.${index}.description`} render={({ field: df }) => (
+                                                    <textarea {...df} rows={1} className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-[#F59E0B] resize-y" placeholder="Item description..." />
                                                 )} />
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Controller control={control} name={`items.${index}.qty`} render={({ field: qtyField }) => (
-                                                    <input type="number" step="any" min="0" {...qtyField} className="w-full px-2 py-1.5 text-sm text-right border border-slate-300 rounded focus:ring-1 focus:ring-[#F59E0B]" />
+                                                <Controller control={control} name={`items.${index}.qty`} render={({ field: qf }) => (
+                                                    <input type="number" step="any" min="0" {...qf} className="w-full px-2 py-1.5 text-sm text-right border border-slate-300 rounded focus:ring-1 focus:ring-[#F59E0B]" />
                                                 )} />
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Controller control={control} name={`items.${index}.unit_price`} render={({ field: priceField }) => (
-                                                    <input type="number" step="any" min="0" {...priceField} className="w-full px-2 py-1.5 text-sm text-right border border-slate-300 rounded focus:ring-1 focus:ring-[#F59E0B]" />
+                                                <Controller control={control} name={`items.${index}.unit_price`} render={({ field: pf }) => (
+                                                    <input type="number" step="any" min="0" {...pf} className="w-full px-2 py-1.5 text-sm text-right border border-slate-300 rounded focus:ring-1 focus:ring-[#F59E0B]" />
                                                 )} />
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Controller control={control} name={`items.${index}.discount_pct`} render={({ field: discField }) => (
-                                                    <input type="number" step="any" min="0" max="100" {...discField} className="w-full px-2 py-1.5 text-sm text-right border border-slate-300 rounded focus:ring-1 focus:ring-[#F59E0B]" />
+                                                <Controller control={control} name={`items.${index}.discount_pct`} render={({ field: df }) => (
+                                                    <input type="number" step="any" min="0" max="100" {...df} className="w-full px-2 py-1.5 text-sm text-right border border-slate-300 rounded focus:ring-1 focus:ring-[#F59E0B]" />
                                                 )} />
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Controller control={control} name={`items.${index}.tax_rate_id`} render={({ field: taxField }) => (
+                                                <Controller control={control} name={`items.${index}.tax_rate_id`} render={({ field: tf }) => (
                                                     <select
-                                                        {...taxField}
+                                                        {...tf}
                                                         className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-[#F59E0B] bg-white"
                                                         onChange={(e) => {
                                                             const val = e.target.value ? Number(e.target.value) : '';
-                                                            taxField.onChange(val);
-                                                            if (val !== '') handleTaxRateChange(index, val);
+                                                            tf.onChange(val);
+                                                            if (val !== '') handleTaxRateChange(index, val as number);
+                                                            else setValue(`items.${index}.tax_rate_obj`, null);
                                                         }}
                                                     >
                                                         <option value="">None (0%)</option>
@@ -356,7 +310,6 @@ export default function NewEstimatePage() {
                             </tbody>
                         </table>
                     </div>
-
                     <div className="p-4 bg-slate-50 border-t border-slate-100">
                         <button
                             type="button"
@@ -368,15 +321,15 @@ export default function NewEstimatePage() {
                     </div>
                 </div>
 
-                {/* Totals & Notes - Side by Side */}
+                {/* Totals & Notes */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
-                        <h3 className="text-sm font-medium text-slate-700 mb-2">Terms & Conditions</h3>
+                        <h3 className="text-sm font-medium text-slate-700 mb-2">Terms & Notes</h3>
                         <Controller control={control} name="notes" render={({ field }) => (
                             <textarea
                                 {...field}
                                 className="w-full flex-1 min-h-[120px] px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent resize-none text-sm"
-                                placeholder="1. Quote valid for 30 days.  2. Advance payment 50% required."
+                                placeholder="Quote valid for 30 days. Subject to terms and conditions..."
                             />
                         )} />
                     </div>
@@ -387,36 +340,18 @@ export default function NewEstimatePage() {
                                 <span>Subtotal:</span>
                                 <span className="font-medium">₹{totals.subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
-
-                            <div className="flex justify-between items-center text-slate-600">
-                                <span>Total Discount (₹):</span>
-                                <Controller control={control} name="discount" render={({ field }) => (
-                                    <input type="number" step="any" min="0" {...field} className="w-24 px-2 py-1 text-right border border-slate-300 rounded focus:ring-1 focus:ring-[#F59E0B]" />
-                                )} />
-                            </div>
-
                             {totals.taxTotal > 0 && (
                                 <div className="py-2 border-y border-slate-100 space-y-2">
-                                    {watchIsIgst ? (
-                                        <div className="flex justify-between text-slate-500 text-xs">
-                                            <span>IGST:</span>
-                                            <span>₹{totals.igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className="flex justify-between text-slate-500 text-xs">
-                                                <span>CGST:</span>
-                                                <span>₹{totals.cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                            </div>
-                                            <div className="flex justify-between text-slate-500 text-xs">
-                                                <span>SGST:</span>
-                                                <span>₹{totals.sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                            </div>
-                                        </>
-                                    )}
+                                    <div className="flex justify-between text-slate-500 text-xs">
+                                        <span>CGST:</span>
+                                        <span>₹{totals.cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-slate-500 text-xs">
+                                        <span>SGST:</span>
+                                        <span>₹{totals.sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    </div>
                                 </div>
                             )}
-
                             <div className="flex justify-between items-center pt-3 border-t border-slate-200">
                                 <span className="text-base font-bold text-slate-800">Grand Total:</span>
                                 <span className="text-xl font-bold text-[#F59E0B]">

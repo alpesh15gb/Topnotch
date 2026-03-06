@@ -1,105 +1,146 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, StyleSheet } from 'react-native';
-import { TrendingUp, TrendingDown, Clock, Plus, FileText, ShoppingCart, CreditCard } from 'lucide-react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import {
+  FileText, ShoppingCart, FileCheck, Truck,
+  CreditCard, Package, Receipt, ClipboardList,
+  BarChart2, Users, Settings, ChevronDown,
+  TrendingUp, BookOpen
+} from 'lucide-react-native';
+import { useAuthStore } from '../../store/auth-store';
 
-const C = { primary: '#0F172A', accent: '#F59E0B', bg: '#F8FAFC' };
+const C = { bg: '#12172B', card: '#1E2640', accent: '#F59E0B', text: '#FFFFFF', sub: '#8892A4', border: '#2A3350' };
+
+const CREATE_ACTIONS = [
+  { label: 'Invoice',         icon: FileText,      route: '/sales/new',      color: '#60A5FA' },
+  { label: 'Purchase',        icon: ShoppingCart,  route: '/purchases/new',  color: '#60A5FA' },
+  { label: 'Estimate',        icon: FileCheck,     route: '/sales/new',      color: '#60A5FA' },
+  { label: 'Delivery\nChallan', icon: Truck,       route: '/sales/new',      color: '#60A5FA' },
+  { label: 'Credit Note',     icon: CreditCard,    route: '/sales/new',      color: '#60A5FA' },
+  { label: 'Purchase\nOrder', icon: ClipboardList, route: '/purchases/new',  color: '#60A5FA' },
+  { label: 'Expenses',        icon: Receipt,       route: '/purchases/new',  color: '#60A5FA' },
+  { label: 'Pro Forma\nInvoice', icon: FileText,   route: '/sales/new',      color: '#60A5FA' },
+];
+
+const QUICK_ACCESS = [
+  { label: 'Reports',   icon: BarChart2,     route: '/(tabs)/sales',     color: '#A78BFA' },
+  { label: 'Parties',   icon: Users,         route: '/(tabs)/parties',   color: '#34D399' },
+  { label: 'Items',     icon: Package,       route: '/(tabs)/items',     color: '#F59E0B' },
+  { label: 'Settings',  icon: Settings,      route: '/(tabs)/profile',   color: '#94A3B8' },
+  { label: 'Sales',     icon: TrendingUp,    route: '/(tabs)/sales',     color: '#60A5FA' },
+  { label: 'Ledger',    icon: BookOpen,      route: '/(tabs)/profile',   color: '#F87171' },
+];
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const [refreshing, setRefreshing] = React.useState(false);
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
-
-  const kpis = [
-    { title: "Today's Sales", amount: '₹12,450', icon: <TrendingUp color="#10B981" size={22} />, trend: '+12%', trendColor: '#10B981', route: '/(tabs)/sales' },
-    { title: 'Weekly Expenses', amount: '₹4,200', icon: <TrendingDown color="#EF4444" size={22} />, trend: '-5%', trendColor: '#EF4444', route: '/(tabs)/purchases' },
-    { title: 'Pending GST', amount: '₹1,500', icon: <Clock color={C.accent} size={22} />, trend: 'Due 15th', trendColor: C.accent, route: '/(tabs)/sales' },
-  ];
-
-  const quickActions = [
-    { label: 'New Invoice', icon: <FileText color="#fff" size={20} />, route: '/sales/new', bg: '#3B82F6' },
-    { label: 'New Purchase', icon: <ShoppingCart color="#fff" size={20} />, route: '/purchases/new', bg: '#8B5CF6' },
-    { label: 'New Expense', icon: <CreditCard color="#fff" size={20} />, route: '/(tabs)/purchases', bg: '#EF4444' },
-  ];
+  const user = useAuthStore(s => s.user);
 
   return (
     <View style={s.container}>
-      <ScrollView style={{ flex: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        <View style={s.content}>
-          <Text style={s.label}>FINANCIAL OVERVIEW</Text>
-          <Text style={s.heading}>Hello, Admin!</Text>
-
-          {/* KPI Cards */}
-          <View style={s.kpiRow}>
-            {kpis.map((kpi, idx) => (
-              <TouchableOpacity key={idx} style={s.kpiCard} onPress={() => router.push(kpi.route as any)}>
-                <View style={s.kpiTop}>
-                  <View style={s.kpiIcon}>{kpi.icon}</View>
-                  <Text style={[s.trend, { color: kpi.trendColor }]}>{kpi.trend}</Text>
-                </View>
-                <Text style={s.kpiTitle}>{kpi.title}</Text>
-                <Text style={s.kpiAmount}>{kpi.amount}</Text>
-              </TouchableOpacity>
-            ))}
+      {/* Header */}
+      <View style={s.header}>
+        <View style={s.headerLeft}>
+          <View style={s.companyAvatar}>
+            <Text style={s.companyInitial}>TN</Text>
           </View>
-
-          {/* Quick Actions */}
-          <Text style={s.sectionTitle}>Quick Actions</Text>
-          <View style={s.actionsRow}>
-            {quickActions.map((action, idx) => (
-              <TouchableOpacity key={idx} style={[s.actionBtn, { backgroundColor: action.bg }]} onPress={() => router.push(action.route as any)}>
-                {action.icon}
-                <Text style={s.actionLabel}>{action.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Recent Activity */}
-          <Text style={s.sectionTitle}>Recent Invoices</Text>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <TouchableOpacity key={i} style={s.activityRow} onPress={() => router.push('/sales/new' as any)}>
-              <View style={s.invBadge}><Text style={s.invText}>INV</Text></View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.invTitle}>Invoice #INV-00{i}</Text>
-                <Text style={s.invSub}>Customer Acme Corp • Today</Text>
-              </View>
-              <Text style={s.invAmount}>₹2,500</Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity style={s.companyNameRow}>
+            <Text style={s.companyName} numberOfLines={1}>TopNotch</Text>
+            <ChevronDown size={16} color={C.text} style={{ marginLeft: 4 }} />
+          </TouchableOpacity>
         </View>
-      </ScrollView>
+        <Image source={require('../../assets/images/logo.png')} style={s.headerLogo} resizeMode="contain" />
+      </View>
 
-      <TouchableOpacity style={s.fab} onPress={() => router.push('/sales/new' as any)}>
-        <Plus color="white" size={28} />
-      </TouchableOpacity>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Sales / Purchases Summary */}
+        <View style={s.summaryCard}>
+          <View style={s.summaryTop}>
+            <TouchableOpacity style={s.periodRow}>
+              <Text style={s.periodText}>This Year</Text>
+              <ChevronDown size={14} color={C.text} style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/sales' as any)}>
+              <Text style={s.viewLink}>View Bills</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={s.summaryRow}>
+            <TouchableOpacity style={s.summaryItem} onPress={() => router.push('/(tabs)/sales' as any)}>
+              <Text style={s.summaryLabel}>Sales</Text>
+              <Text style={s.summaryAmount}>₹0.00</Text>
+            </TouchableOpacity>
+            <View style={s.summaryDivider} />
+            <TouchableOpacity style={s.summaryItem} onPress={() => router.push('/(tabs)/purchases' as any)}>
+              <Text style={s.summaryLabel}>Purchases</Text>
+              <Text style={s.summaryAmount}>₹0.00</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Create Section */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Create</Text>
+          <View style={s.grid}>
+            {CREATE_ACTIONS.map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <TouchableOpacity key={idx} style={s.gridItem} onPress={() => router.push(item.route as any)}>
+                  <View style={s.gridIcon}>
+                    <Icon size={28} color={item.color} strokeWidth={1.5} />
+                  </View>
+                  <Text style={s.gridLabel}>{item.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Quick Access */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Quick Access</Text>
+          <View style={s.grid}>
+            {QUICK_ACCESS.map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <TouchableOpacity key={idx} style={s.gridItem} onPress={() => router.push(item.route as any)}>
+                  <View style={s.gridIcon}>
+                    <Icon size={28} color={item.color} strokeWidth={1.5} />
+                  </View>
+                  <Text style={s.gridLabel}>{item.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={{ height: 30 }} />
+      </ScrollView>
     </View>
   );
 }
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
-  content: { padding: 20 },
-  label: { fontSize: 11, fontWeight: '600', color: '#94A3B8', letterSpacing: 1, textTransform: 'uppercase' },
-  heading: { fontSize: 24, fontWeight: 'bold', color: C.primary, marginTop: 4 },
-  kpiRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 20 },
-  kpiCard: { backgroundColor: '#fff', borderRadius: 16, padding: 14, width: '48%', marginBottom: 14, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 2, borderWidth: 1, borderColor: '#F1F5F9' },
-  kpiTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  kpiIcon: { backgroundColor: '#F8FAFC', padding: 6, borderRadius: 8 },
-  trend: { fontSize: 11, fontWeight: 'bold' },
-  kpiTitle: { fontSize: 11, color: '#64748B', fontWeight: '500' },
-  kpiAmount: { fontSize: 18, fontWeight: 'bold', color: C.primary, marginTop: 2 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: C.primary, marginTop: 8, marginBottom: 12 },
-  actionsRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  actionBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 14, gap: 6 },
-  actionLabel: { color: '#fff', fontSize: 11, fontWeight: '700', textAlign: 'center' },
-  activityRow: { backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 1, borderWidth: 1, borderColor: '#F1F5F9' },
-  invBadge: { width: 40, height: 40, backgroundColor: '#EFF6FF', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  invText: { color: '#3B82F6', fontWeight: 'bold', fontSize: 10 },
-  invTitle: { fontSize: 14, fontWeight: 'bold', color: C.primary },
-  invSub: { fontSize: 12, color: '#94A3B8', marginTop: 2 },
-  invAmount: { fontSize: 14, fontWeight: 'bold', color: C.primary },
-  fab: { position: 'absolute', bottom: 24, right: 24, width: 56, height: 56, backgroundColor: C.accent, borderRadius: 28, alignItems: 'center', justifyContent: 'center', elevation: 6 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 52, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: C.border },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  companyAvatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  companyInitial: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  companyNameRow: { flexDirection: 'row', alignItems: 'center' },
+  companyName: { color: C.text, fontWeight: 'bold', fontSize: 16, maxWidth: 160 },
+  headerLogo: { width: 90, height: 40 },
+  summaryCard: { backgroundColor: C.card, margin: 14, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.border },
+  summaryTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  periodRow: { flexDirection: 'row', alignItems: 'center' },
+  periodText: { color: C.text, fontWeight: '600', fontSize: 15 },
+  viewLink: { color: C.accent, fontWeight: '600', fontSize: 14 },
+  summaryRow: { flexDirection: 'row' },
+  summaryItem: { flex: 1, alignItems: 'flex-start' },
+  summaryLabel: { color: C.sub, fontSize: 13, marginBottom: 4 },
+  summaryAmount: { color: C.text, fontSize: 22, fontWeight: 'bold' },
+  summaryDivider: { width: 1, backgroundColor: C.border, marginHorizontal: 16 },
+  section: { backgroundColor: C.card, marginHorizontal: 14, marginBottom: 14, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.border },
+  sectionTitle: { color: C.text, fontSize: 17, fontWeight: 'bold', marginBottom: 16 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap' },
+  gridItem: { width: '25%', alignItems: 'center', marginBottom: 20 },
+  gridIcon: { width: 54, height: 54, borderRadius: 14, backgroundColor: '#0F172A', alignItems: 'center', justifyContent: 'center', marginBottom: 8, borderWidth: 1, borderColor: C.border },
+  gridLabel: { color: C.text, fontSize: 11, textAlign: 'center', lineHeight: 15 },
 });

@@ -4,11 +4,13 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { QueryClientProvider } from '@tanstack/react-query';
 
 import '../global.css';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { useAuthStore } from '../store/auth-store';
+import { queryClient } from '../lib/queryClient';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -64,12 +66,21 @@ function RootLayoutNav() {
   }, [token, isHydrated, segments]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="auth" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="sales/new" options={{ headerShown: false }} />
+          <Stack.Screen name="sales/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="purchases/new" options={{ headerShown: false }} />
+          <Stack.Screen name="parties/new" options={{ headerShown: false }} />
+          <Stack.Screen name="parties/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="items/new" options={{ headerShown: false }} />
+          <Stack.Screen name="reports/index" options={{ headerShown: false }} />
+        </Stack>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }

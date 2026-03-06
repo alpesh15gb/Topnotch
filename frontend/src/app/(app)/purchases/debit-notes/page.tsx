@@ -50,7 +50,7 @@ export default function DebitNotesPage() {
             // Assuming a generic endpoint pattern; adjust if specific route exists
             const res = await api.get('/v1/debit-notes', {
                 params: { search, status: statusFilter }
-            }).catch(() => ({ data: { data: [], current_page: 1, last_page: 1 } })); // Mock fallback if endpoint not ready
+            });
             return res.data;
         }
     });

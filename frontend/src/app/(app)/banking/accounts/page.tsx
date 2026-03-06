@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { Plus, Search, Building2 } from 'lucide-react';
+import { Plus, Building2 } from 'lucide-react';
 import Link from 'next/link';
 
 interface BankAccount {
@@ -22,10 +22,9 @@ export default function BankAccountsPage() {
     const { data: accounts, isLoading } = useQuery({
         queryKey: ['bank_accounts', search],
         queryFn: async () => {
-            // Typically banking is part of chart of accounts mapped specially, but assuming a dedicated endpoint for dashboard
-            const res = await api.get('/v1/accounts', {
+            const res = await api.get('/v1/bank-accounts', {
                 params: { search, type: 'bank' } // Mock filter
-            }).catch(() => ({ data: { data: [] } }));
+            });
             return res.data;
         }
     });
@@ -38,12 +37,13 @@ export default function BankAccountsPage() {
                     <p className="text-sm text-slate-500">Manage your company bank and cash accounts</p>
                 </div>
 
-                <button
+                <Link
+                    href="/banking/accounts/new"
                     className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#0F172A] text-white rounded-lg hover:bg-[#1e3a5f] transition-colors shadow-sm"
                 >
                     <Plus size={18} />
                     <span>Add Bank Account</span>
-                </button>
+                </Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -82,7 +82,7 @@ export default function BankAccountsPage() {
                     </div>
                 ) : (
                     accounts?.data?.map((account: BankAccount) => (
-                        <div key={account.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
+                        <Link key={account.id} href={`/banking/accounts/${account.id}`} className="block bg-white rounded-xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
                                     <Building2 size={24} />
@@ -96,7 +96,7 @@ export default function BankAccountsPage() {
                                     ₹{Math.abs(account.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                 </p>
                             </div>
-                        </div>
+                        </Link>
                     ))
                 )}
             </div>

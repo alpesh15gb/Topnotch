@@ -15,7 +15,7 @@ export default function FundTransfersPage() {
         queryFn: async () => {
             const res = await api.get('/v1/fund-transfers', {
                 params: { search }
-            }).catch(() => ({ data: { data: [], current_page: 1, last_page: 1 } })); // Mock fallback
+            });
             return res.data;
         }
     });

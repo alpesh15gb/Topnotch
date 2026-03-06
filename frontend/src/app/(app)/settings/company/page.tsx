@@ -27,12 +27,7 @@ export default function CompanyProfilePage() {
     const { data: profile, isLoading } = useQuery({
         queryKey: ['company_settings'],
         queryFn: async () => {
-            const res = await api.get('/v1/settings/company').catch(() => ({
-                data: {
-                    name: 'Acme Corp', gstin: '27AABCT2388D1Z2', email: 'hello@acme.com',
-                    phone: '', website: '', pan_number: '', address: '', city: '', state: '', pincode: ''
-                }
-            }));
+            const res = await api.get('/v1/settings/company');
             return res.data;
         }
     });

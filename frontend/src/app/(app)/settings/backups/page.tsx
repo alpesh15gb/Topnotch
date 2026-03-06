@@ -18,9 +18,7 @@ export default function BackupsPage() {
     const { data: backups, isLoading, refetch } = useQuery({
         queryKey: ['backups'],
         queryFn: async () => {
-            const res = await api.get('/v1/backups').catch(() => ({
-                data: []
-            }));
+            const res = await api.get('/v1/backups');
             return res.data;
         }
     });

@@ -44,7 +44,7 @@ export default function ProformaInvoicesPage() {
         queryFn: async () => {
             const res = await api.get('/v1/proforma-invoices', {
                 params: { search, status: statusFilter }
-            }).catch(() => ({ data: { data: [], current_page: 1, last_page: 1 } })); // Mock fallback
+            });
             return res.data;
         }
     });

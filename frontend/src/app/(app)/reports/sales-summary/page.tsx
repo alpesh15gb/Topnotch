@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { BarChart3, TrendingUp, CreditCard, Clock, Receipt } from 'lucide-react';
+import { Receipt, BarChart3, CreditCard, Clock, TrendingUp, DollarSign } from 'lucide-react';
 
 const fmt = (n: number) => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2 });
 
@@ -52,32 +52,66 @@ export default function SalesSummaryPage() {
                 </div>
             ) : data ? (
                 <div className="space-y-6">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                        <MetricCard label="Total Invoices" value={data.total_invoices} icon={<Receipt size={20} className="text-blue-500" />} isCount />
-                        <MetricCard label="Total Sales" value={data.total_sales} icon={<BarChart3 size={20} className="text-emerald-500" />} />
-                        <MetricCard label="Collected" value={data.total_collected} icon={<CreditCard size={20} className="text-indigo-500" />} />
-                        <MetricCard label="Outstanding" value={data.total_outstanding} icon={<Clock size={20} className="text-amber-500" />} />
-                        <MetricCard label="Tax Collected" value={data.total_tax} icon={<TrendingUp size={20} className="text-rose-500" />} />
+                    {/* 6 KPI Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <MetricCard
+                            label="Total Invoices"
+                            value={data.total_invoices}
+                            icon={<Receipt size={20} className="text-blue-500" />}
+                            isCount
+                            bg="bg-blue-50"
+                        />
+                        <MetricCard
+                            label="Sales Amount (Subtotal)"
+                            value={data.sales}
+                            icon={<BarChart3 size={20} className="text-violet-500" />}
+                            bg="bg-violet-50"
+                        />
+                        <MetricCard
+                            label="Tax Collected (GST)"
+                            value={data.tax}
+                            icon={<TrendingUp size={20} className="text-rose-500" />}
+                            bg="bg-rose-50"
+                        />
+                        <MetricCard
+                            label="Revenue Collected"
+                            value={data.collected}
+                            icon={<CreditCard size={20} className="text-emerald-500" />}
+                            bg="bg-emerald-50"
+                        />
+                        <MetricCard
+                            label="Outstanding"
+                            value={data.outstanding}
+                            icon={<Clock size={20} className="text-amber-500" />}
+                            bg="bg-amber-50"
+                        />
+                        <MetricCard
+                            label="Total Revenue (with GST)"
+                            value={data.revenue}
+                            icon={<DollarSign size={20} className="text-slate-600" />}
+                            bg="bg-slate-50"
+                            bold
+                        />
                     </div>
 
-                    {/* Collection Rate */}
-                    {data.total_sales > 0 && (
+                    {/* Collection Rate Bar */}
+                    {Number(data.revenue) > 0 && (
                         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
                             <div className="flex items-center justify-between mb-3">
                                 <h3 className="font-semibold text-slate-700">Collection Rate</h3>
                                 <span className="text-sm font-bold text-slate-800">
-                                    {((data.total_collected / data.total_sales) * 100).toFixed(1)}%
+                                    {((Number(data.collected) / Number(data.revenue)) * 100).toFixed(1)}%
                                 </span>
                             </div>
                             <div className="w-full bg-slate-100 rounded-full h-3">
                                 <div
                                     className="bg-emerald-500 h-3 rounded-full transition-all"
-                                    style={{ width: `${Math.min((data.total_collected / data.total_sales) * 100, 100)}%` }}
+                                    style={{ width: `${Math.min((Number(data.collected) / Number(data.revenue)) * 100, 100)}%` }}
                                 />
                             </div>
                             <div className="flex justify-between mt-2 text-xs text-slate-500">
-                                <span>Collected: {fmt(data.total_collected)}</span>
-                                <span>Outstanding: {fmt(data.total_outstanding)}</span>
+                                <span>Collected: {fmt(data.collected)}</span>
+                                <span>Outstanding: {fmt(data.outstanding)}</span>
                             </div>
                         </div>
                     )}
@@ -89,15 +123,22 @@ export default function SalesSummaryPage() {
     );
 }
 
-function MetricCard({ label, value, icon, isCount }: { label: string; value: number; icon: React.ReactNode; isCount?: boolean }) {
+function MetricCard({ label, value, icon, isCount, bg, bold }: {
+    label: string;
+    value: number;
+    icon: React.ReactNode;
+    isCount?: boolean;
+    bg?: string;
+    bold?: boolean;
+}) {
     return (
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+            <div className={`inline-flex p-2 rounded-lg mb-3 ${bg ?? 'bg-slate-50'}`}>
                 {icon}
-                <p className="text-xs text-slate-500 font-medium">{label}</p>
             </div>
-            <p className="text-xl font-bold text-slate-800">
-                {isCount ? value : fmt(value)}
+            <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{label}</p>
+            <p className={`text-xl mt-1 ${bold ? 'font-extrabold text-slate-900' : 'font-bold text-slate-800'}`}>
+                {isCount ? Number(value).toLocaleString('en-IN') : fmt(value)}
             </p>
         </div>
     );

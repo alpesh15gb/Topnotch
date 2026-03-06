@@ -1,58 +1,70 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { LayoutDashboard, ShoppingCart, CreditCard, User } from 'lucide-react-native';
+import { Home, FileText, Package, Users, MoreHorizontal } from 'lucide-react-native';
+
+const C = { bg: '#12172B', tabBar: '#1A2035', accent: '#F59E0B', inactive: '#4A5568', border: '#2A3350' };
 
 export default function TabLayout() {
-  const primaryColor = '#0F172A';
-  const accentColor = '#F59E0B';
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: accentColor,
-        tabBarInactiveTintColor: '#94A3B8',
+        tabBarActiveTintColor: C.accent,
+        tabBarInactiveTintColor: C.inactive,
         tabBarStyle: {
-          backgroundColor: primaryColor,
-          borderTopWidth: 0,
-          height: 60,
-          paddingBottom: 8,
+          backgroundColor: C.tabBar,
+          borderTopWidth: 1,
+          borderTopColor: C.border,
+          height: 64,
+          paddingBottom: 10,
+          paddingTop: 6,
         },
-        headerStyle: {
-          backgroundColor: primaryColor,
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '600',
         },
+        headerStyle: { backgroundColor: C.bg },
         headerTintColor: '#FFFFFF',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        headerTitleStyle: { fontWeight: 'bold' },
+        headerShown: false,
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => <Home size={size} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="sales"
         options={{
-          title: 'Sales',
-          tabBarIcon: ({ color, size }) => <ShoppingCart size={size} color={color} />,
+          title: 'Bills',
+          tabBarIcon: ({ color, size }) => <FileText size={size} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
-        name="purchases"
+        name="items"
         options={{
-          title: 'Purchases',
-          tabBarIcon: ({ color, size }) => <CreditCard size={size} color={color} />,
+          title: 'Items',
+          tabBarIcon: ({ color, size }) => <Package size={size} color={color} strokeWidth={2} />,
+        }}
+      />
+      <Tabs.Screen
+        name="parties"
+        options={{
+          title: 'Parties',
+          tabBarIcon: ({ color, size }) => <Users size={size} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+          title: 'More',
+          tabBarIcon: ({ color, size }) => <MoreHorizontal size={size} color={color} strokeWidth={2} />,
         }}
       />
+      {/* Hidden tabs — still routable but not shown in tab bar */}
+      <Tabs.Screen name="purchases" options={{ href: null }} />
+      <Tabs.Screen name="two" options={{ href: null }} />
     </Tabs>
   );
 }
