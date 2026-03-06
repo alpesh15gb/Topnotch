@@ -77,3 +77,21 @@ prod-up:
 
 prod-down:
 	docker compose -f docker-compose.yml down
+
+# Fast deploy: only rebuild frontend (Next.js) — use after frontend-only changes
+deploy-frontend:
+	git pull origin master
+	docker compose -f docker-compose.yml build web
+	docker compose -f docker-compose.yml up -d --no-deps web
+
+# Fast deploy: only rebuild backend (Laravel) — use after backend-only changes
+deploy-backend:
+	git pull origin master
+	docker compose -f docker-compose.yml build app worker scheduler
+	docker compose -f docker-compose.yml up -d --no-deps app worker scheduler
+
+# Full deploy with cache (faster than prod-build, rebuilds all)
+deploy:
+	git pull origin master
+	docker compose -f docker-compose.yml build
+	docker compose -f docker-compose.yml up -d
