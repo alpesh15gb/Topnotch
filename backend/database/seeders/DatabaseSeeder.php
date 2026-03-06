@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             DefaultAccountsSeeder::class,
             TaxRateSeeder::class,
+            ItemUnitSeeder::class,
         ]);
     }
 }

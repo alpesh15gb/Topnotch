@@ -41,7 +41,10 @@ export default function NewItemPage() {
     const mutation = useMutation({
         mutationFn: (payload: typeof form) => api.post('/v1/items', {
             ...payload,
-            sale_price: payload.sale_price ? Number(payload.sale_price) : null,
+            sku: payload.sku || null,
+            hsn_sac: payload.hsn_sac || null,
+            description: payload.description || null,
+            sale_price: payload.sale_price ? Number(payload.sale_price) : 0,
             purchase_price: payload.purchase_price ? Number(payload.purchase_price) : null,
             tax_rate_id: payload.tax_rate_id || null,
             unit_id: payload.unit_id || null,
@@ -202,7 +205,7 @@ export default function NewItemPage() {
                             >
                                 <option value="">Select Unit</option>
                                 {(units || []).map((u: any) => (
-                                    <option key={u.id} value={u.id}>{u.name} ({u.short_name})</option>
+                                    <option key={u.id} value={u.id}>{u.name} ({u.symbol})</option>
                                 ))}
                             </select>
                         </div>

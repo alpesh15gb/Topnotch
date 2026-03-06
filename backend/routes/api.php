@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\BackupController;
 use App\Http\Controllers\Api\V1\DebitNoteController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ReceiptController;
+use App\Models\ItemUnit;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -50,6 +51,7 @@ Route::prefix('v1')->group(function () {
 
             Route::apiResource('items', ItemController::class);
             Route::post('items/{item}/stock-adjustment', [ItemController::class, 'stockAdjustment']);
+            Route::get('units', fn() => response()->json(ItemUnit::orderBy('name')->get()));
 
             Route::get('accounts/tree', [AccountController::class, 'tree']);
             Route::apiResource('accounts', AccountController::class);
